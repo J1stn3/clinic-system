@@ -1,2 +1,61 @@
 # Local PostgreSQL credentials (copy from appsettings.Local.json.example)
 clinic-management-api/appsettings.Local.json
+
+# =========================
+# .NET (API & Tests)
+# =========================
+[Bb]in/
+[Oo]bj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]inaries/
+[Oo]utput/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.DotSettings.user
+
+# =========================
+# Node.js & React (Vite)
+# =========================
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+
+# Environment variables
+.env
+.env.*.local
+
+# OS Files
+.DS_Store
+Thumbs.db
