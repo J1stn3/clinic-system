@@ -73,7 +73,7 @@ export default function Settings() {
           </div>
         )}
         {isAdmin ? (
-          <Button className="mt-6" variant="accent" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+          <Button className="mt-6 w-full sm:w-auto" variant="accent" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving…' : 'Save Settings'}
           </Button>
         ) : (

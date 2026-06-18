@@ -44,7 +44,7 @@ export default function PaymentForm({ open, onOpenChange }: { open: boolean; onO
         <form className="mt-4 space-y-3" onSubmit={handleSubmit((v) => mutation.mutate(v))}>
           <div>
             <Label>Billing</Label>
-            <select className="w-full rounded-md border px-3 py-2" {...register('billingId')}>
+            <select className="aicare-input mt-1" {...register('billingId')}>
               <option value="">Select bill...</option>
               {(billings.data ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
@@ -59,7 +59,7 @@ export default function PaymentForm({ open, onOpenChange }: { open: boolean; onO
           </div>
           <div>
             <Label>Method</Label>
-            <select className="w-full rounded-md border px-3 py-2" {...register('method')}>
+            <select className="aicare-input mt-1" {...register('method')}>
               <option value="Cash">Cash</option>
               <option value="Card">Card</option>
               <option value="Online">Online</option>
@@ -69,9 +69,11 @@ export default function PaymentForm({ open, onOpenChange }: { open: boolean; onO
             <Label>Transaction Ref (optional)</Label>
             <Input {...register('transactionRef')} />
           </div>
-          <Button type="submit" disabled={formState.isSubmitting}>
-            Submit Payment
-          </Button>
+          <div className="aicare-page-actions pt-2">
+            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting}>
+              Submit Payment
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </DialogRoot>

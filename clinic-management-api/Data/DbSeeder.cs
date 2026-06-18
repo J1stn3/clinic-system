@@ -414,7 +414,7 @@ public static class DbSeeder
             db.TelemedicineSessions.Add(new TelemedicineSession
             {
                 AppointmentId = apt.Id,
-                MeetingUrl = $"https://meet.icms-central.ph/room/{apt.Id:N}",
+                MeetingUrl = $"https://meet.jit.si/icms-{apt.Id:N}",
                 Status = apt.Status == "Completed" ? "Completed" : "Created"
             });
         }

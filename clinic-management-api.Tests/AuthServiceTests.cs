@@ -44,6 +44,38 @@ public class AuthServiceTests
         Assert.False(string.IsNullOrWhiteSpace(result.RefreshToken));
     }
 
+    [Fact]
+    public async Task RegisterPatientAsync_AlwaysCreatesPatientRole()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var db = new ApplicationDbContext(options);
+        var jwtOptions = Options.Create(new JwtOptions
+        {
+            Secret = "TestSecretKeyThatIsLongEnoughForHmacSha256",
+            Issuer = "ICMS",
+            Audience = "ICMS",
+            AccessTokenMinutes = 60,
+            RefreshTokenDays = 7
+        });
+        var service = new AuthService(db, jwtOptions, new FakeCurrentUser());
+
+        var result = await service.RegisterPatientAsync(new PatientRegisterRequest(
+            "Jane Patient",
+            "jane.patient@example.com",
+            "Patient@123",
+            "Female",
+            new DateTime(1995, 5, 15, 0, 0, 0, DateTimeKind.Utc)));
+
+        Assert.Equal(RoleNames.Patient, result.RoleName);
+        var user = await db.Users.SingleAsync(u => u.Email == "jane.patient@example.com");
+        Assert.Equal(RoleNames.Patient, user.RoleName);
+        Assert.True(await db.Patients.AnyAsync(p => p.UserId == user.Id));
+        Assert.False(await db.Doctors.AnyAsync(d => d.UserId == user.Id));
+    }
+
     private sealed class FakeCurrentUser : ICurrentUserService
     {
         public Guid? UserId { get; } = Guid.NewGuid();

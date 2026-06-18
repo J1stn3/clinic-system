@@ -44,6 +44,49 @@ public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, 
         return await BuildAuthResponse(user);
     }
 
+    public async Task<PatientRegisterResponse> RegisterPatientAsync(PatientRegisterRequest request)
+    {
+        var email = request.Email.ToLowerInvariant().Trim();
+        var exists = await db.Users.AnyAsync(x => x.Email == email);
+        if (exists) throw new InvalidOperationException("An account with this email already exists.");
+
+        // Self-service registration is patient-only; role is never taken from the client.
+        const string assignedRole = RoleNames.Patient;
+
+        var user = new User
+        {
+            FullName = request.FullName.Trim(),
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            RoleName = assignedRole
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        db.Patients.Add(new Patient
+        {
+            UserId = user.Id,
+            Gender = request.Gender,
+            DateOfBirth = request.DateOfBirth?.ToUniversalTime()
+        });
+        await db.SaveChangesAsync();
+
+        if (user.RoleName != RoleNames.Patient)
+            throw new InvalidOperationException("Registration failed: only patient accounts can be created via self-service signup.");
+
+        return new PatientRegisterResponse(
+            "Patient account created successfully. You can now sign in.",
+            assignedRole);
+    }
+
+    public Task<MessageResponse> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        // In production, send a reset email when the account exists. Always return the same message.
+        _ = request.Email.ToLowerInvariant().Trim();
+        return Task.FromResult(new MessageResponse(
+            "If an account exists for that email, password reset instructions have been sent."));
+    }
+
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
         var user = await db.Users.FirstOrDefaultAsync(x => x.Email == request.Email.ToLowerInvariant());

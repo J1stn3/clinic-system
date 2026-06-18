@@ -75,7 +75,7 @@ export default function AIClinicalSupport() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label>Age</Label>
                 <Input className="aicare-input" type="number" {...register('age', { valueAsNumber: true })} />
@@ -97,7 +97,7 @@ export default function AIClinicalSupport() {
               <Label>Vitals (optional, e.g. BP 140/90)</Label>
               <Input {...register('vitals')} />
             </div>
-            <Button type="submit" disabled={formState.isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting}>
               <Brain className="mr-2 h-4 w-4" />
               Analyze Clinical Data
             </Button>

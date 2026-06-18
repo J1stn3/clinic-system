@@ -15,6 +15,17 @@ public class AuthController(IAuthService authService) : ApiControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest request) =>
         OkData(await authService.RegisterAsync(request));
 
+    /// <summary>Public self-service signup — always creates a Patient account.</summary>
+    [AllowAnonymous]
+    [HttpPost("register/patient")]
+    public async Task<IActionResult> RegisterPatient([FromBody] PatientRegisterRequest request) =>
+        OkData(await authService.RegisterPatientAsync(request));
+
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request) =>
+        OkData(await authService.ForgotPasswordAsync(request));
+
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)

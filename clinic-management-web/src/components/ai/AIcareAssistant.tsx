@@ -59,7 +59,7 @@ function AIcareAssistantBase() {
       <button
         type="button"
         onClick={() => uiStore.setAssistantOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 animate-pulse-soft items-center justify-center rounded-full bg-gradient-to-br from-aicare-blue to-aicare-teal text-white shadow-glass transition-transform hover:scale-105"
+        className="aicare-fab-mobile fixed z-50 flex h-14 w-14 animate-pulse-soft items-center justify-center rounded-full bg-gradient-to-br from-aicare-blue to-aicare-teal text-white shadow-glass transition-transform hover:scale-105"
         aria-label="Open AIcare Assistant"
       >
         <Sparkles className="h-6 w-6" />
@@ -72,8 +72,8 @@ function AIcareAssistantBase() {
       className={cn(
         'fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-glass animate-slide-up',
         uiStore.assistantExpanded
-          ? 'bottom-4 right-4 left-4 top-4 md:left-auto md:w-[480px]'
-          : 'bottom-6 right-6 h-[min(560px,calc(100vh-3rem))] w-[min(400px,calc(100vw-2rem))]',
+          ? 'inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+0.5rem)] top-3 sm:inset-auto sm:bottom-4 sm:right-4 sm:left-4 sm:top-4 md:left-auto md:w-[480px]'
+          : 'inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+0.5rem)] h-[min(520px,calc(100dvh-5.5rem-env(safe-area-inset-bottom)))] sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto sm:h-[min(560px,calc(100vh-3rem))] sm:w-[min(400px,calc(100vw-2rem))]',
       )}
     >
       <div className="flex items-center justify-between bg-gradient-to-r from-aicare-blue to-aicare-teal px-4 py-3 text-white">

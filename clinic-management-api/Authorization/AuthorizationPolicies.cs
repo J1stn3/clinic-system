@@ -10,6 +10,7 @@ public static class AuthorizationPolicies
     public const string PatientOnly = nameof(PatientOnly);
     public const string StaffOnly = nameof(StaffOnly);
     public const string PatientOrAdmin = nameof(PatientOrAdmin);
+    public const string BookAppointment = nameof(BookAppointment);
 
     public static void Configure(Microsoft.AspNetCore.Authorization.AuthorizationOptions options)
     {
@@ -20,5 +21,7 @@ public static class AuthorizationPolicies
         options.AddPolicy(PatientOrAdmin, policy =>
             policy.RequireAssertion(ctx =>
                 ctx.User.IsInRole(RoleNames.Patient) || ctx.User.IsInRole(RoleNames.Administrator)));
+        options.AddPolicy(BookAppointment, policy =>
+            policy.RequireRole(RoleNames.Patient, RoleNames.Administrator, RoleNames.Doctor));
     }
 }

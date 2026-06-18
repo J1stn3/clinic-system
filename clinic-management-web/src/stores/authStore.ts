@@ -36,6 +36,9 @@ class AuthStore {
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('role')
     localStorage.removeItem('fullName')
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+      window.location.href = '/login'
+    }
   }
 }
 

@@ -28,6 +28,8 @@ export type DashboardStats = {
   dispensedToday: number
   pendingBills: number
   telemedicineSessions: number
+  activeTelemedicineSessions: number
+  upcomingVirtualAppointments: number
   aiAnalyses: number
   totalRevenue: number
   newPatientsThisMonth: number

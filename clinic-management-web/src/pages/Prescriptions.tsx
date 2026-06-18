@@ -32,7 +32,7 @@ export default function Prescriptions() {
       createLabel="Issue Prescription"
       headerAction={
         authStore.role === 'Doctor' ? (
-          <Button variant="accent">
+          <Button variant="accent" className="w-full sm:w-auto">
             <Send className="mr-2 h-4 w-4" />
             Issue Prescription
           </Button>
@@ -40,7 +40,7 @@ export default function Prescriptions() {
       }
       metrics={
         authStore.role === 'Doctor' ? (
-          <div className="mb-6 grid gap-4 lg:grid-cols-3">
+          <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <h3 className="mb-3 font-semibold text-slate-900">Medication Search</h3>
               <input type="search" placeholder="Search medications..." className="aicare-input mb-4" />
@@ -48,16 +48,16 @@ export default function Prescriptions() {
                 {MEDICATIONS.map((med) => (
                   <div
                     key={med.name}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 hover:bg-slate-50"
+                    className="flex flex-col gap-3 rounded-xl border border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium text-slate-900">{med.name} {med.dosage}</p>
                       <p className="text-xs text-slate-500">Tablet · {med.class}</p>
                       {med.allergy && <StatusPill variant="warning">Allergy Risk</StatusPill>}
                     </div>
                     <button
                       type="button"
-                      className="rounded-lg bg-teal-50 p-2 text-aicare-teal hover:bg-teal-100"
+                      className="self-end rounded-lg bg-teal-50 p-2 text-aicare-teal hover:bg-teal-100 sm:self-center"
                       onClick={() => setSelected(`${med.name} ${med.dosage}`)}
                       aria-label={`Add ${med.name}`}
                     >

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { authStore } from '../stores/authStore'
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5064/api',
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
 })
 
 api.interceptors.request.use((config) => {
@@ -20,7 +20,7 @@ api.interceptors.response.use(
       original._retry = true
       try {
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL ?? 'http://localhost:5064/api'}/auth/refresh`,
+          `${import.meta.env.VITE_API_URL ?? '/api'}/auth/refresh`,
           { refreshToken: authStore.refreshToken },
         )
         authStore.login({

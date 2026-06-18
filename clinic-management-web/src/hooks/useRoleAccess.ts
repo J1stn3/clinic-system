@@ -112,7 +112,10 @@ const navSections: Record<string, { title: string; paths: string[] }[]> = {
 
 export function canAccess(path: string) {
   if (!authStore.role) return false
-  return roleRoutes[authStore.role]?.includes(path) ?? false
+  const routes = roleRoutes[authStore.role] ?? []
+  if (routes.includes(path)) return true
+  if (path.startsWith('/telemedicine/room/') && routes.includes('/telemedicine')) return true
+  return false
 }
 
 export function getNavItems() {
@@ -136,4 +139,19 @@ export function getNavSections() {
         .map((path) => ({ path, label: labels[path], badge: navBadges[path] })),
     }))
     .filter((section) => section.items.length > 0)
+}
+
+/** Shortcuts shown in the mobile bottom bar (full menu is the burger sidebar). */
+const mobileQuickNav: Record<string, string[]> = {
+  Administrator: ['/', '/patients', '/appointments', '/reports'],
+  Doctor: ['/', '/consultations', '/telemedicine', '/appointments'],
+  Patient: ['/', '/appointments', '/telemedicine', '/billing'],
+}
+
+export function getMobileQuickNav() {
+  if (!authStore.role) return []
+  const allowed = new Set(roleRoutes[authStore.role])
+  return (mobileQuickNav[authStore.role] ?? [])
+    .filter((path) => allowed.has(path))
+    .map((path) => ({ path, label: labels[path] }))
 }

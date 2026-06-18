@@ -29,7 +29,7 @@ export function useAppointments() {
     queryKey: ['options', 'appointments'],
     queryFn: async () =>
       (
-        await api.get<Paged<{ id: string; patientId: string; patientName?: string; status: string }>>('/Appointment', {
+        await api.get<Paged<{ id: string; patientId: string; patientName?: string; doctorName?: string; status: string; isVirtual?: boolean; meetingUrl?: string; telemedicineStatus?: string; scheduledAt?: string }>>('/Appointment', {
           params: { page: 1, pageSize: 100 },
         })
       ).data.items,

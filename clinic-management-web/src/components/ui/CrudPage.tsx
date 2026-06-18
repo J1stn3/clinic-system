@@ -3,6 +3,7 @@ import { Table } from 'antd'
 import { Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useCrud } from '../../hooks/useCrud'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 import { api } from '../../services/api'
 import { Button } from './button'
 import { DialogContent, DialogRoot, DialogTitle } from './dialog'
@@ -32,6 +33,7 @@ type CrudPageProps<T extends { id: string }> = {
   createLabel?: string
   embedded?: boolean
   anchorId?: string
+  hideTable?: boolean
 }
 
 export function CrudPage<T extends { id: string }>({
@@ -49,8 +51,10 @@ export function CrudPage<T extends { id: string }>({
   createLabel = 'Add New',
   embedded = false,
   anchorId,
+  hideTable = false,
 }: CrudPageProps<T>) {
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
@@ -102,7 +106,7 @@ export function CrudPage<T extends { id: string }>({
             title: 'Actions',
             key: 'actions',
             render: (_: unknown, record: T) => (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {canEdit && (
                   <Button size="sm" variant="outline" onClick={() => openEdit(record)}>
                     Edit
@@ -144,8 +148,10 @@ export function CrudPage<T extends { id: string }>({
   const content = (
     <div id={anchorId}>
       {metrics}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="aicare-search-wrap">
+      {!hideTable && (
+        <>
+      <div className="aicare-toolbar">
+        <div className="aicare-search-wrap w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
@@ -154,6 +160,7 @@ export function CrudPage<T extends { id: string }>({
             placeholder={`Search ${title.toLowerCase()}...`}
           />
         </div>
+        <div className="aicare-toolbar-actions w-full sm:w-auto">
         <Button variant="outline" onClick={() => listQuery.refetch()} disabled={listQuery.isFetching}>
           {listQuery.isFetching ? 'Refreshing...' : 'Refresh'}
         </Button>
@@ -163,11 +170,12 @@ export function CrudPage<T extends { id: string }>({
           </Button>
         )}
         {extraActions}
+        </div>
       </div>
       <p className="mb-2 text-xs text-slate-500">
         Showing {filteredItems.length} of {listQuery.data?.totalCount ?? filteredItems.length} records
       </p>
-      <Card className="!p-0 overflow-hidden">
+      <Card className="!p-0 overflow-hidden hover:translate-y-0 hover:shadow-card">
         {listQuery.isLoading ? (
           <div className="p-5">
             <TableSkeleton />
@@ -184,21 +192,29 @@ export function CrudPage<T extends { id: string }>({
             />
           </div>
         ) : (
+          <div className="aicare-table-scroll">
           <Table
             className="aicare-table"
             rowKey="id"
             dataSource={filteredItems}
             columns={tableColumns}
+            scroll={{ x: 'max-content' }}
             pagination={{
               current: page,
               pageSize: listQuery.data?.pageSize ?? 10,
               total: listQuery.data?.totalCount ?? 0,
               onChange: setPage,
               showSizeChanger: false,
+              size: 'small',
+              responsive: true,
+              simple: isMobile,
             }}
           />
+          </div>
         )}
       </Card>
+        </>
+      )}
 
       <DialogRoot open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
@@ -241,7 +257,7 @@ export function CrudPage<T extends { id: string }>({
               </div>
             ))}
           </div>
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="aicare-page-actions mt-4">
             <Button variant="outline" onClick={() => setFormOpen(false)}>
               Cancel
             </Button>
@@ -255,7 +271,11 @@ export function CrudPage<T extends { id: string }>({
   if (embedded) return content
 
   return (
-    <PageShell title={title} description={description} action={primaryAction}>
+    <PageShell
+      title={title}
+      description={description}
+      action={primaryAction ? <div className="aicare-page-actions">{primaryAction}</div> : undefined}
+    >
       {content}
     </PageShell>
   )

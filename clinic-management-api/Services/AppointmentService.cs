@@ -19,7 +19,9 @@ public class AppointmentService(ApplicationDbContext db, ICurrentUserService cur
     public async Task<PagedResult<AppointmentDto>> GetAllAsync(PagedQuery query)
     {
         var q = db.Appointments.Include(a => a.Patient).ThenInclude(p => p.User)
-            .Include(a => a.Doctor).ThenInclude(d => d.User).AsQueryable();
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .Include(a => a.TelemedicineSession)
+            .AsQueryable();
 
         if (currentUser.Role == RoleNames.Patient)
         {
@@ -42,13 +44,29 @@ public class AppointmentService(ApplicationDbContext db, ICurrentUserService cur
     public async Task<AppointmentDto> CreateAsync(CreateAppointmentRequest request)
     {
         Guid patientId;
+        Guid doctorId;
+
         if (currentUser.Role == RoleNames.Patient)
         {
             patientId = (await currentUser.GetPatientProfileIdAsync()) ?? throw new UnauthorizedAccessException();
+            if (!request.DoctorId.HasValue)
+                throw new InvalidOperationException("DoctorId is required for patient booking.");
+            doctorId = request.DoctorId.Value;
+        }
+        else if (currentUser.Role == RoleNames.Doctor)
+        {
+            var did = await currentUser.GetDoctorProfileIdAsync() ?? throw new UnauthorizedAccessException();
+            if (!request.PatientId.HasValue)
+                throw new InvalidOperationException("PatientId is required for doctor booking.");
+            patientId = request.PatientId.Value;
+            doctorId = did;
         }
         else if (currentUser.Role == RoleNames.Administrator && request.PatientId.HasValue)
         {
+            if (!request.DoctorId.HasValue)
+                throw new InvalidOperationException("DoctorId is required for admin booking.");
             patientId = request.PatientId.Value;
+            doctorId = request.DoctorId.Value;
         }
         else
         {
@@ -58,7 +76,7 @@ public class AppointmentService(ApplicationDbContext db, ICurrentUserService cur
         var appointment = new Appointment
         {
             PatientId = patientId,
-            DoctorId = request.DoctorId,
+            DoctorId = doctorId,
             ScheduledAt = request.ScheduledAt.ToUniversalTime(),
             Notes = request.Notes,
             IsVirtual = request.IsVirtual,
@@ -113,11 +131,15 @@ public class AppointmentService(ApplicationDbContext db, ICurrentUserService cur
     private async Task<AppointmentDto> GetDtoById(Guid id)
     {
         var a = await db.Appointments.Include(x => x.Patient).ThenInclude(p => p.User)
-            .Include(x => x.Doctor).ThenInclude(d => d.User).FirstAsync(x => x.Id == id);
+            .Include(x => x.Doctor).ThenInclude(d => d.User)
+            .Include(x => x.TelemedicineSession)
+            .FirstAsync(x => x.Id == id);
         return ToDto(a);
     }
 
     private static AppointmentDto ToDto(Appointment a) =>
         new(a.Id, a.PatientId, a.DoctorId, a.ScheduledAt, a.Status, a.Notes, a.IsVirtual,
-            a.Patient.User.FullName, a.Doctor.User.FullName);
+            a.Patient.User.FullName, a.Doctor.User.FullName,
+            a.IsVirtual ? a.TelemedicineSession?.MeetingUrl : null,
+            a.IsVirtual ? a.TelemedicineSession?.Status : null);
 }

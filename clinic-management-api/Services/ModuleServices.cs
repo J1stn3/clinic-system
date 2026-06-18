@@ -233,13 +233,22 @@ public interface ITelemedicineService
 {
     Task<PagedResult<TelemedicineDto>> GetAllAsync(PagedQuery query);
     Task<TelemedicineDto> CreateAsync(CreateTelemedicineRequest request);
+    Task<TelemedicineDto> UpdateAsync(Guid id, UpdateTelemedicineRequest request);
+    Task<TelemedicineDto?> GetByAppointmentIdAsync(Guid appointmentId);
 }
 
-public class TelemedicineService(ApplicationDbContext db, ICurrentUserService currentUser) : ITelemedicineService
+public class TelemedicineService(ApplicationDbContext db, ICurrentUserService currentUser, Microsoft.Extensions.Options.IOptions<TelemedicineOptions> options) : ITelemedicineService
 {
+    private readonly TelemedicineOptions _options = options.Value;
+
     public async Task<PagedResult<TelemedicineDto>> GetAllAsync(PagedQuery query)
     {
-        var q = db.TelemedicineSessions.Include(t => t.Appointment).AsQueryable();
+        var q = db.TelemedicineSessions
+            .Include(t => t.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
+            .Include(t => t.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+            .Where(t => !t.Appointment.IsDeleted)
+            .AsQueryable();
+
         if (currentUser.Role == RoleNames.Patient)
         {
             var pid = await currentUser.GetPatientProfileIdAsync();
@@ -252,9 +261,22 @@ public class TelemedicineService(ApplicationDbContext db, ICurrentUserService cu
         }
 
         var total = await q.CountAsync();
-        var items = await q.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)
-            .Select(t => new TelemedicineDto(t.Id, t.AppointmentId, t.MeetingUrl, t.Status)).ToListAsync();
+        var items = await q.OrderByDescending(t => t.Appointment.ScheduledAt)
+            .Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)
+            .Select(t => ToDto(t)).ToListAsync();
         return new PagedResult<TelemedicineDto>(items, total, query.Page, query.PageSize);
+    }
+
+    public async Task<TelemedicineDto?> GetByAppointmentIdAsync(Guid appointmentId)
+    {
+        var session = await db.TelemedicineSessions
+            .Include(t => t.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
+            .Include(t => t.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+            .FirstOrDefaultAsync(t => t.AppointmentId == appointmentId && !t.Appointment.IsDeleted);
+
+        if (session is null) return null;
+        await EnsureSessionAccess(session.Appointment);
+        return ToDto(session);
     }
 
     public async Task<TelemedicineDto> CreateAsync(CreateTelemedicineRequest request)
@@ -262,36 +284,84 @@ public class TelemedicineService(ApplicationDbContext db, ICurrentUserService cu
         var appointment = await db.Appointments.FindAsync(request.AppointmentId)
             ?? throw new KeyNotFoundException("Appointment not found.");
 
+        if (appointment.IsDeleted)
+            throw new InvalidOperationException("Cannot create a session for a deleted appointment.");
+
         if (!appointment.IsVirtual)
             throw new InvalidOperationException("Telemedicine sessions can only be created for virtual appointments.");
+
+        await EnsureSessionAccess(appointment);
+
+        var existing = await db.TelemedicineSessions.FirstOrDefaultAsync(t => t.AppointmentId == request.AppointmentId);
+        if (existing is not null)
+            return await GetDtoById(existing.Id);
+
+        var session = new TelemedicineSession
+        {
+            AppointmentId = request.AppointmentId,
+            MeetingUrl = _options.BuildMeetingUrl(request.AppointmentId),
+            Status = "Created"
+        };
+        db.TelemedicineSessions.Add(session);
+        await db.SaveChangesAsync();
+        return await GetDtoById(session.Id);
+    }
+
+    public async Task<TelemedicineDto> UpdateAsync(Guid id, UpdateTelemedicineRequest request)
+    {
+        var session = await db.TelemedicineSessions
+            .Include(t => t.Appointment)
+            .FirstOrDefaultAsync(t => t.Id == id)
+            ?? throw new KeyNotFoundException("Telemedicine session not found.");
+
+        await EnsureSessionAccess(session.Appointment);
+
+        var status = request.Status.Trim();
+        if (string.IsNullOrEmpty(status))
+            throw new InvalidOperationException("Status is required.");
+
+        session.Status = status;
+        await db.SaveChangesAsync();
+        return await GetDtoById(id);
+    }
+
+    private async Task EnsureSessionAccess(Appointment appointment)
+    {
+        if (currentUser.Role == RoleNames.Administrator) return;
 
         if (currentUser.Role == RoleNames.Patient)
         {
             var pid = await currentUser.GetPatientProfileIdAsync();
             if (appointment.PatientId != pid) throw new UnauthorizedAccessException();
+            return;
         }
-        else if (currentUser.Role == RoleNames.Doctor)
+
+        if (currentUser.Role == RoleNames.Doctor)
         {
             var did = await currentUser.GetDoctorProfileIdAsync();
             if (appointment.DoctorId != did) throw new UnauthorizedAccessException();
-        }
-        else
-        {
-            currentUser.EnsureRole(RoleNames.Administrator);
+            return;
         }
 
-        var existing = await db.TelemedicineSessions.FirstOrDefaultAsync(t => t.AppointmentId == request.AppointmentId);
-        if (existing is not null)
-            return new TelemedicineDto(existing.Id, existing.AppointmentId, existing.MeetingUrl, existing.Status);
-
-        var session = new TelemedicineSession
-        {
-            AppointmentId = request.AppointmentId,
-            MeetingUrl = $"https://meet.icms.local/{request.AppointmentId:N}",
-            Status = "Created"
-        };
-        db.TelemedicineSessions.Add(session);
-        await db.SaveChangesAsync();
-        return new TelemedicineDto(session.Id, session.AppointmentId, session.MeetingUrl, session.Status);
+        throw new UnauthorizedAccessException();
     }
+
+    private async Task<TelemedicineDto> GetDtoById(Guid id)
+    {
+        var session = await db.TelemedicineSessions
+            .Include(t => t.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
+            .Include(t => t.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+            .FirstAsync(t => t.Id == id);
+        return ToDto(session);
+    }
+
+    private static TelemedicineDto ToDto(TelemedicineSession t) =>
+        new(
+            t.Id,
+            t.AppointmentId,
+            t.MeetingUrl,
+            t.Status,
+            t.Appointment.Patient.User.FullName,
+            t.Appointment.Doctor.User.FullName,
+            t.Appointment.ScheduledAt);
 }

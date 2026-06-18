@@ -1,63 +1,108 @@
 import { Link } from 'react-router-dom'
-import { Monitor, Users, Video } from 'lucide-react'
+import { Calendar, Monitor, Video } from 'lucide-react'
 import { CrudPage } from '../components/ui/CrudPage'
 import { Button } from '../components/ui/button'
 import { StatCard, StatusPill } from '../components/ui/PageShell'
 import { useDashboardStats } from '../hooks/useDashboardStats'
-import { useAppointments } from '../hooks/useEntityOptions'
+import { authStore } from '../stores/authStore'
+
+type TelemedicineRow = {
+  id: string
+  appointmentId: string
+  meetingUrl?: string
+  status: string
+  patientName?: string
+  doctorName?: string
+  scheduledAt?: string
+}
 
 export default function Telemedicine() {
   const { data: stats, isLoading } = useDashboardStats()
-  const appointments = useAppointments()
-  const appointmentById = new Map((appointments.data ?? []).map((a) => [a.id, a]))
+  const role = authStore.role
+
+  const headerAction =
+    role === 'Patient' ? (
+      <Link to="/appointments">
+        <Button variant="accent">Book Virtual Visit</Button>
+      </Link>
+    ) : role === 'Doctor' ? (
+      <Link to="/consultations">
+        <Button variant="accent">Start Consultation</Button>
+      </Link>
+    ) : (
+      <Link to="/appointments">
+        <Button variant="accent">Schedule Virtual Visit</Button>
+      </Link>
+    )
 
   return (
     <CrudPage
       title="Telemedicine"
-      description="Manage virtual consultation sessions and meeting links."
+      description="Manage virtual consultation sessions and join video rooms."
       resource="Telemedicine"
-      headerAction={
-        <Link to="/appointments">
-          <Button variant="accent">Book Virtual Visit</Button>
-        </Link>
-      }
+      headerAction={headerAction}
       metrics={
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <StatCard label="Active Sessions" value={isLoading ? '…' : (stats?.telemedicineSessions ?? 0)} tone="info" icon={<Video className="h-5 w-5" />} />
-          <StatCard label="Upcoming Virtual" value={isLoading ? '…' : (stats?.upcomingAppointments ?? 0)} tone="success" icon={<Monitor className="h-5 w-5" />} />
-          <StatCard label="Patients Online" value={isLoading ? '…' : (stats?.patients ?? 0)} tone="default" icon={<Users className="h-5 w-5" />} />
+          <StatCard
+            label="Active Sessions"
+            value={isLoading ? '…' : (stats?.activeTelemedicineSessions ?? 0)}
+            tone="info"
+            icon={<Video className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Upcoming Virtual"
+            value={isLoading ? '…' : (stats?.upcomingVirtualAppointments ?? 0)}
+            tone="success"
+            icon={<Monitor className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Total Sessions"
+            value={isLoading ? '…' : (stats?.telemedicineSessions ?? 0)}
+            tone="default"
+            icon={<Calendar className="h-5 w-5" />}
+          />
         </div>
       }
       columns={[
         {
           title: 'Appointment',
-          dataIndex: 'appointmentId',
-          render: (v) => {
-            const apt = appointmentById.get(String(v))
+          dataIndex: 'patientName',
+          render: (_v, record) => {
+            const row = record as TelemedicineRow
             return (
               <div>
-                <p className="font-medium text-slate-900">{apt?.patientName ?? 'Patient'}</p>
-                <p className="text-xs text-slate-500">{(apt as { doctorName?: string }).doctorName ?? 'Doctor'}</p>
+                <p className="font-medium text-slate-900">{row.patientName ?? 'Patient'}</p>
+                <p className="text-xs text-slate-500">
+                  Dr. {row.doctorName ?? 'Doctor'}
+                  {row.scheduledAt
+                    ? ` · ${new Date(row.scheduledAt).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}`
+                    : ''}
+                </p>
               </div>
             )
           },
         },
         {
           title: 'Meeting',
-          dataIndex: 'meetingUrl',
-          render: (url) =>
-            url ? (
-              <a
-                href={String(url)}
-                target="_blank"
-                rel="noreferrer"
+          dataIndex: 'appointmentId',
+          render: (v, record) => {
+            const row = record as TelemedicineRow
+            const appointmentId = String(v ?? row.appointmentId)
+            if (!appointmentId) return '—'
+            return (
+              <Link
+                to={`/telemedicine/room/${appointmentId}`}
                 className="inline-flex items-center rounded-lg bg-aicare-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-aicare-teal/90"
               >
                 Join Session
-              </a>
-            ) : (
-              '—'
-            ),
+              </Link>
+            )
+          },
         },
         {
           title: 'Status',

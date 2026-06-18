@@ -7,6 +7,7 @@ import { CrudPage } from '../components/ui/CrudPage'
 import { Card, StatCard, StatusPill } from '../components/ui/PageShell'
 import { Button } from '../components/ui/button'
 import { useDashboardStats } from '../hooks/useDashboardStats'
+import { usePatients } from '../hooks/useEntityOptions'
 import { api } from '../services/api'
 import { authStore } from '../stores/authStore'
 
@@ -18,27 +19,44 @@ function statusVariant(status: string) {
   return 'warning' as const
 }
 
+type AppointmentRow = {
+  id: string
+  isVirtual?: boolean
+  meetingUrl?: string
+  telemedicineStatus?: string
+  patientName?: string
+  doctorName?: string
+  scheduledAt?: string
+  status?: string
+  notes?: string
+}
+
 export default function Appointments() {
   const [showBook, setShowBook] = useState(false)
   const [tab, setTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
   const { data: stats, isLoading } = useDashboardStats()
+  const role = authStore.role
+  const patients = usePatients()
 
   const doctors = useQuery({
     queryKey: ['doctors'],
     queryFn: async () => (await api.get('/Doctor', { params: { page: 1, pageSize: 50 } })).data.items,
-    enabled: authStore.role === 'Patient',
+    enabled: role !== 'Doctor',
   })
 
-  const headerAction =
-    authStore.role === 'Patient' ? (
-      <Button variant="accent" onClick={() => setShowBook(true)}>
-        + New Booking
-      </Button>
-    ) : (
-      <Link to="/appointments">
-        <Button variant="accent">+ New Booking</Button>
-      </Link>
-    )
+  const canBook = role === 'Patient' || role === 'Administrator' || role === 'Doctor'
+  const bookingReady =
+    role === 'Patient'
+      ? Boolean(doctors.data)
+      : role === 'Administrator'
+        ? Boolean(doctors.data && patients.data)
+        : Boolean(patients.data)
+
+  const headerAction = canBook ? (
+    <Button variant="accent" className="w-full sm:w-auto" onClick={() => setShowBook(true)}>
+      + New Booking
+    </Button>
+  ) : undefined
 
   return (
     <>
@@ -47,8 +65,8 @@ export default function Appointments() {
         description="Book, view, and manage clinic appointments."
         resource="Appointment"
         headerAction={headerAction}
-        canEdit={authStore.role !== 'Patient'}
-        canDelete={authStore.role === 'Administrator'}
+        canEdit={role !== 'Patient'}
+        canDelete={role === 'Administrator'}
         metrics={
           <div className="mb-6 grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-1">
@@ -65,18 +83,20 @@ export default function Appointments() {
             </Card>
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
               <StatCard label="Upcoming" value={isLoading ? '…' : (stats?.upcomingAppointments ?? 0)} tone="info" />
-              <StatCard label="Total Scheduled" value={isLoading ? '…' : (stats?.appointments ?? 0)} tone="default" />
+              <StatCard
+                label="Virtual Upcoming"
+                value={isLoading ? '…' : (stats?.upcomingVirtualAppointments ?? 0)}
+                tone="success"
+              />
             </div>
             <Card className="lg:col-span-3">
-              <div className="mb-4 flex gap-4 border-b border-slate-100">
+              <div className="aicare-tabs-scroll mb-4">
                 {(['upcoming', 'past', 'cancelled'] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
                     onClick={() => setTab(t)}
-                    className={`border-b-2 pb-2 text-sm font-medium capitalize ${
-                      tab === t ? 'border-aicare-teal text-aicare-teal' : 'border-transparent text-slate-500'
-                    }`}
+                    className={tab === t ? 'aicare-tab-active capitalize' : 'aicare-tab capitalize'}
                   >
                     {t}
                   </button>
@@ -90,17 +110,28 @@ export default function Appointments() {
         }
         columns={[
           {
-            title: 'Appointment',
-            dataIndex: 'patientName',
-            render: (v, record) => (
-              <div>
-                <p className="font-semibold text-slate-900">{String(v ?? 'Patient')}</p>
-                <p className="text-xs text-slate-500">
-                  {String((record as { doctorName?: string }).doctorName ?? 'Doctor')} ·{' '}
-                  {String((record as { scheduledAt?: string }).scheduledAt ?? '').slice(0, 16)}
-                </p>
-              </div>
-            ),
+            title: 'Date & Time',
+            dataIndex: 'scheduledAt',
+            render: (v, record) => {
+              const row = record as AppointmentRow
+              const dateStr = String(row.scheduledAt ?? v ?? '')
+              const d = dateStr ? new Date(dateStr) : null
+              return (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-teal-50 text-aicare-teal sm:h-14 sm:w-14">
+                    <span className="text-[10px] font-bold uppercase">{d ? d.toLocaleString(undefined, { month: 'short' }) : '—'}</span>
+                    <span className="text-lg font-bold leading-none">{d ? d.getDate() : '—'}</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">{row.patientName ?? 'Patient'}</p>
+                    <p className="text-xs text-slate-500">
+                      {row.doctorName ?? 'Doctor'}
+                      {d ? ` · ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : ''}
+                    </p>
+                  </div>
+                </div>
+              )
+            },
           },
           {
             title: 'Type',
@@ -114,10 +145,29 @@ export default function Appointments() {
             dataIndex: 'status',
             render: (v) => <StatusPill variant={statusVariant(String(v))}>{String(v)}</StatusPill>,
           },
+          {
+            title: 'Video',
+            dataIndex: 'meetingUrl',
+            render: (_v, record) => {
+              const row = record as AppointmentRow
+              if (!row.isVirtual) return '—'
+              if (row.meetingUrl) {
+                return (
+                  <Link
+                    to={`/telemedicine/room/${row.id}`}
+                    className="text-sm font-semibold text-aicare-teal hover:underline"
+                  >
+                    Join
+                  </Link>
+                )
+              }
+              return <span className="text-xs text-slate-400">Pending</span>
+            },
+          },
           { title: 'Notes', dataIndex: 'notes' },
         ]}
         fields={
-          authStore.role !== 'Patient'
+          role !== 'Patient'
             ? [
                 { name: 'status', label: 'Status' },
                 { name: 'notes', label: 'Notes' },
@@ -125,9 +175,10 @@ export default function Appointments() {
             : []
         }
       />
-      {showBook && doctors.data && (
+      {showBook && bookingReady && (
         <AppointmentForm
-          doctors={doctors.data}
+          doctors={doctors.data ?? []}
+          patients={patients.data}
           onClose={() => setShowBook(false)}
           onSuccess={() => {
             setShowBook(false)

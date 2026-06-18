@@ -15,16 +15,18 @@ export default function DispensePanel({
   onDispense: () => void
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="w-full min-w-0 sm:flex-1">
         <Label>Medicine ID</Label>
-        <Input value={medicineId} onChange={(e) => onMedicineId(e.target.value)} />
+        <Input className="aicare-input mt-1" value={medicineId} onChange={(e) => onMedicineId(e.target.value)} />
       </div>
-      <div>
+      <div className="w-full min-w-0 sm:w-28">
         <Label>Quantity</Label>
-        <Input type="number" value={quantity} onChange={(e) => onQuantity(e.target.value)} />
+        <Input className="aicare-input mt-1" type="number" value={quantity} onChange={(e) => onQuantity(e.target.value)} />
       </div>
-      <Button onClick={onDispense}>Dispense</Button>
+      <Button className="w-full sm:w-auto" onClick={onDispense}>
+        Dispense
+      </Button>
     </div>
   )
 }

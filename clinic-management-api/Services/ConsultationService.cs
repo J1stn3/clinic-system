@@ -15,6 +15,12 @@ public interface IConsultationService
 
 public class ConsultationService(ApplicationDbContext db, ICurrentUserService currentUser) : IConsultationService
 {
+    private static async Task UpdateTelemedicineStatusAsync(ApplicationDbContext db, Guid appointmentId, string status)
+    {
+        var session = await db.TelemedicineSessions.FirstOrDefaultAsync(t => t.AppointmentId == appointmentId);
+        if (session is not null)
+            session.Status = status;
+    }
     public async Task<PagedResult<ConsultationDto>> GetAllAsync(PagedQuery query)
     {
         var q = db.Consultations.AsQueryable();
@@ -46,6 +52,9 @@ public class ConsultationService(ApplicationDbContext db, ICurrentUserService cu
             throw new UnauthorizedAccessException();
 
         appointment.Status = "In Progress";
+        if (appointment.IsVirtual)
+            await UpdateTelemedicineStatusAsync(db, request.AppointmentId, "In Progress");
+
         var consultation = new Consultation
         {
             AppointmentId = request.AppointmentId,
@@ -70,7 +79,12 @@ public class ConsultationService(ApplicationDbContext db, ICurrentUserService cu
         c.Symptoms = request.Symptoms;
         c.Diagnosis = request.Diagnosis;
         var appointment = await db.Appointments.FindAsync(c.AppointmentId);
-        if (appointment is not null) appointment.Status = "Completed";
+        if (appointment is not null)
+        {
+            appointment.Status = "Completed";
+            if (appointment.IsVirtual)
+                await UpdateTelemedicineStatusAsync(db, c.AppointmentId, "Completed");
+        }
         await db.SaveChangesAsync();
         return new ConsultationDto(c.Id, c.AppointmentId, c.DoctorId, c.PatientId, c.Symptoms, c.Diagnosis);
     }

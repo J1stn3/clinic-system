@@ -25,22 +25,20 @@ export default function MedicalRecords() {
       canCreate={authStore.role === 'Doctor'}
       createLabel="New Record"
       headerAction={
-        <div className="flex gap-2">
-          <Button variant="outline">Print</Button>
-          <Button variant="accent">Export</Button>
+        <div className="aicare-page-actions">
+          <Button variant="outline" className="w-full sm:w-auto">Print</Button>
+          <Button variant="accent" className="w-full sm:w-auto">Export</Button>
         </div>
       }
       metrics={
         <>
-          <div className="mb-4 flex gap-4 border-b border-slate-200">
+          <div className="aicare-tabs-scroll mb-4">
             {TABS.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`border-b-2 pb-2 text-sm font-medium ${
-                  tab === t ? 'border-aicare-teal text-aicare-teal' : 'border-transparent text-slate-500'
-                }`}
+                className={tab === t ? 'aicare-tab-active' : 'aicare-tab'}
               >
                 {t}
               </button>
@@ -50,7 +48,7 @@ export default function MedicalRecords() {
             <div className="mb-6 grid gap-4 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <h3 className="mb-4 font-semibold text-slate-900">Patient Summary</h3>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   {[
                     { label: 'Blood Group', value: 'O+' },
                     { label: 'Height', value: '—' },

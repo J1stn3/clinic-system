@@ -13,8 +13,10 @@ public record CreatePatientRequest(Guid UserId, string? Gender, DateTime? DateOf
 public record CreateDoctorRequest(Guid UserId, string? Specialty, string? LicenseNumber);
 
 // Appointment
-public record AppointmentDto(Guid Id, Guid PatientId, Guid DoctorId, DateTime ScheduledAt, string Status, string? Notes, bool IsVirtual, string? PatientName, string? DoctorName);
-public record CreateAppointmentRequest(Guid DoctorId, DateTime ScheduledAt, string? Notes, bool IsVirtual, Guid? PatientId = null);
+public record AppointmentDto(
+    Guid Id, Guid PatientId, Guid DoctorId, DateTime ScheduledAt, string Status, string? Notes, bool IsVirtual,
+    string? PatientName, string? DoctorName, string? MeetingUrl = null, string? TelemedicineStatus = null);
+public record CreateAppointmentRequest(Guid? DoctorId, DateTime ScheduledAt, string? Notes, bool IsVirtual, Guid? PatientId = null);
 public record UpdateAppointmentRequest(string Status, string? Notes);
 
 // Consultation
@@ -47,8 +49,11 @@ public record PaymentDto(Guid Id, Guid BillingId, decimal AmountPaid, string Met
 public record CreatePaymentRequest(Guid BillingId, decimal AmountPaid, string Method, string? TransactionRef);
 
 // Telemedicine
-public record TelemedicineDto(Guid Id, Guid AppointmentId, string MeetingUrl, string Status);
+public record TelemedicineDto(
+    Guid Id, Guid AppointmentId, string MeetingUrl, string Status,
+    string? PatientName = null, string? DoctorName = null, DateTime? ScheduledAt = null);
 public record CreateTelemedicineRequest(Guid AppointmentId);
+public record UpdateTelemedicineRequest(string Status);
 
 // Settings
 public record ClinicSettingsDto(Guid Id, string ClinicName, string Timezone, string ContactEmail, string ContactPhone);
@@ -80,6 +85,8 @@ public record DashboardStatsDto(
     int DispensedToday,
     int PendingBills,
     int TelemedicineSessions,
+    int ActiveTelemedicineSessions,
+    int UpcomingVirtualAppointments,
     int AiAnalyses,
     decimal TotalRevenue,
     int NewPatientsThisMonth,

@@ -13,7 +13,7 @@ public class AppointmentController(IAppointmentService service) : ApiControllerB
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PagedQuery query) => OkData(await service.GetAllAsync(query));
 
-    [Authorize(Policy = AuthorizationPolicies.PatientOrAdmin)]
+    [Authorize(Policy = AuthorizationPolicies.BookAppointment)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request) => OkData(await service.CreateAsync(request));
 

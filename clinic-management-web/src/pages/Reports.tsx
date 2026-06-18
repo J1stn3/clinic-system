@@ -40,7 +40,7 @@ export default function Reports() {
       title="Reports & Analytics"
       description="Operational and clinical analytics for administrators."
       action={
-        <Button variant="outline" onClick={() => window.print()}>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={() => window.print()}>
           <Download className="mr-2 h-4 w-4" />
           Export Report
         </Button>
@@ -60,10 +60,10 @@ export default function Reports() {
               <BarChart3 className="h-5 w-5 text-aicare-teal" />
               <h3 className="font-semibold text-slate-900">Clinic Overview</h3>
             </div>
-            <div className="h-72">
+            <div className="aicare-chart-mobile">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <BarChart data={chartData} margin={{ bottom: 48, left: -12, right: 4 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={56} interval={0} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Bar dataKey="value" fill="#0D9488" radius={[8, 8, 0, 0]} />

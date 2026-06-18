@@ -38,8 +38,9 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         var prescriptions = db.Prescriptions.AsQueryable();
         var labs = db.LaboratoryResults.AsQueryable();
         var medicines = db.Medicines.AsQueryable();
+        var telemedicine = db.TelemedicineSessions.Where(t => !t.Appointment.IsDeleted);
 
-        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines);
+        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines, telemedicine);
     }
 
     private async Task<DashboardStatsDto> BuildDoctorStatsAsync()
@@ -56,8 +57,9 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         var prescriptions = db.Prescriptions.Where(p => p.DoctorId == doctorId);
         var labs = db.LaboratoryResults.Where(l => l.DoctorId == doctorId);
         var medicines = db.Medicines.AsQueryable();
+        var telemedicine = db.TelemedicineSessions.Where(t => t.Appointment.DoctorId == doctorId && !t.Appointment.IsDeleted);
 
-        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines);
+        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines, telemedicine);
     }
 
     private async Task<DashboardStatsDto> BuildPatientStatsAsync()
@@ -73,8 +75,9 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         var prescriptions = db.Prescriptions.Where(p => p.PatientId == patientId);
         var labs = db.LaboratoryResults.Where(l => l.PatientId == patientId);
         var medicines = db.Medicines.AsQueryable();
+        var telemedicine = db.TelemedicineSessions.Where(t => t.Appointment.PatientId == patientId && !t.Appointment.IsDeleted);
 
-        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines);
+        return await BuildStatsAsync(patients, doctors, appointments, consultations, prescriptions, labs, medicines, telemedicine);
     }
 
     private async Task<DashboardStatsDto> BuildStatsAsync(
@@ -84,7 +87,8 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         IQueryable<Consultation> consultations,
         IQueryable<Prescription> prescriptions,
         IQueryable<LaboratoryResult> labs,
-        IQueryable<Medicine> medicines)
+        IQueryable<Medicine> medicines,
+        IQueryable<TelemedicineSession> telemedicineSessions)
     {
         var patientCount = await patients.CountAsync();
         var doctorCount = await doctors.CountAsync();
@@ -110,7 +114,10 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         var expiringSoon = await medicines.CountAsync(m => m.StockQuantity <= 50);
         var dispensedToday = await prescriptions.CountAsync(p => p.CreatedAt >= TodayUtc);
         var pendingBills = await db.Billings.CountAsync(b => b.Status == "Pending");
-        var telemedicine = await db.TelemedicineSessions.CountAsync();
+        var telemedicine = await telemedicineSessions.CountAsync();
+        var activeTelemedicine = await telemedicineSessions.CountAsync(t => t.Status != "Completed");
+        var upcomingVirtual = await appointments.CountAsync(a =>
+            a.IsVirtual && a.ScheduledAt >= DateTime.UtcNow && a.Status == "Scheduled");
         var aiAnalyses = await db.AIDecisionSupportLogs.CountAsync();
         var revenue = await db.Payments.SumAsync(p => (decimal?)p.AmountPaid) ?? 0;
         var newPatientsMonth = await patients.CountAsync(p => p.CreatedAt >= new DateTime(TodayUtc.Year, TodayUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc));
@@ -165,6 +172,8 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
             dispensedToday,
             pendingBills,
             telemedicine,
+            activeTelemedicine,
+            upcomingVirtual,
             aiAnalyses,
             revenue,
             newPatientsMonth,

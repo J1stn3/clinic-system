@@ -82,6 +82,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["Secret"] ?? "ReplaceMeWithAStrongLongSecretForProduction";
 builder.Services.Configure<JwtOptions>(jwtSection);
+builder.Services.Configure<TelemedicineOptions>(builder.Configuration.GetSection(TelemedicineOptions.SectionName));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -103,7 +104,11 @@ builder.Services.AddAuthorization(AuthorizationPolicies.Configure);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", p =>
-        p.WithOrigins("http://localhost:5173")
+        p.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });

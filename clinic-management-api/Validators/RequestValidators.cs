@@ -28,8 +28,23 @@ public class CreateAppointmentRequestValidator : AbstractValidator<CreateAppoint
 {
     public CreateAppointmentRequestValidator()
     {
-        RuleFor(x => x.DoctorId).NotEmpty();
         RuleFor(x => x.ScheduledAt).GreaterThan(DateTime.UtcNow.AddHours(-1));
+    }
+}
+
+public class CreateTelemedicineRequestValidator : AbstractValidator<CreateTelemedicineRequest>
+{
+    public CreateTelemedicineRequestValidator()
+    {
+        RuleFor(x => x.AppointmentId).NotEmpty();
+    }
+}
+
+public class UpdateTelemedicineRequestValidator : AbstractValidator<UpdateTelemedicineRequest>
+{
+    public UpdateTelemedicineRequestValidator()
+    {
+        RuleFor(x => x.Status).NotEmpty().MaximumLength(64);
     }
 }
 
@@ -79,6 +94,32 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
         RuleFor(x => x.RoleName).Must(r => RoleNames.All.Contains(r)).WithMessage("Invalid role.");
+    }
+}
+
+public class PatientRegisterRequestValidator : AbstractValidator<PatientRegisterRequest>
+{
+    public PatientRegisterRequestValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(128);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password)
+            .NotEmpty()
+            .MinimumLength(8)
+            .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+            .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
+            .Matches("[0-9]").WithMessage("Password must contain at least one number.")
+            .Matches(@"[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
+        RuleFor(x => x.Gender).NotEmpty().MaximumLength(32);
+        RuleFor(x => x.DateOfBirth).NotNull().LessThan(DateTime.UtcNow.Date);
+    }
+}
+
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
     }
 }
 

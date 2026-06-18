@@ -16,7 +16,9 @@ import Pharmacy from './pages/Pharmacy'
 import Prescriptions from './pages/Prescriptions'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import SignUp from './pages/SignUp'
 import Telemedicine from './pages/Telemedicine'
+import TelemedicineRoom from './pages/TelemedicineRoom'
 import Users from './pages/Users'
 import { authStore } from './stores/authStore'
 
@@ -25,10 +27,30 @@ function Guard({ children }: { children: React.ReactNode }) {
   return children
 }
 
+function GuestGuard({ children }: { children: React.ReactNode }) {
+  if (authStore.isAuthenticated) return <Navigate to="/" replace />
+  return children
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={
+          <GuestGuard>
+            <Login />
+          </GuestGuard>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <GuestGuard>
+            <SignUp />
+          </GuestGuard>
+        }
+      />
       <Route
         element={
           <Guard>
@@ -49,6 +71,7 @@ export default function App() {
         <Route path="/billing" element={<Billing />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/telemedicine" element={<Telemedicine />} />
+        <Route path="/telemedicine/room/:appointmentId" element={<TelemedicineRoom />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/ai-clinical-support" element={<AIClinicalSupport />} />
