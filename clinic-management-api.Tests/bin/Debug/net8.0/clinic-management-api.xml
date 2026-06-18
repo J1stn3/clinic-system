@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>clinic-management-api</name>
+    </assembly>
+    <members>
+        <member name="T:clinic_management_api.Authorization.AuthorizationPolicies">
+            <summary>Named authorization policies for role-based API access.</summary>
+        </member>
+        <member name="T:clinic_management_api.Controllers.ApiControllerBase">
+            <summary>
+            Base API controller for the ICMS MVC layer.
+            Controllers handle HTTP only; business logic lives in services.
+            </summary>
+        </member>
+        <member name="T:clinic_management_api.Controllers.AuthController">
+            <summary>Authentication and session management for ICMS.</summary>
+        </member>
+        <member name="M:clinic_management_api.Controllers.AuthController.#ctor(clinic_management_api.Services.IAuthService)">
+            <summary>Authentication and session management for ICMS.</summary>
+        </member>
+        <member name="M:clinic_management_api.Data.DbSeeder.EnsureCanonicalUsersAsync(clinic_management_api.Data.ApplicationDbContext,System.String)">
+            <summary>
+            Seeds exactly three user accounts: one Administrator, one Doctor, one Patient.
+            </summary>
+        </member>
+        <member name="T:clinic_management_api.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:clinic_management_api.Migrations.AddRelationshipsAndSettings">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.AddRelationshipsAndSettings.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.AddRelationshipsAndSettings.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Migrations.AddRelationshipsAndSettings.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

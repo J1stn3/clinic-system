@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --aicare-navy: #0f172a;
+    --aicare-blue: #0f766e;
+    --aicare-teal: #0d9488;
+    --aicare-teal-light: #ccfbf1;
+    --aicare-cyan: #06b6d4;
+    --aicare-surface: #f8fafc;
+    --aicare-panel: #ffffff;
+    --aicare-gray: #64748b;
+    --aicare-border: #e2e8f0;
+  }
+
+  body {
+    @apply bg-[#f8fafc] font-sans text-slate-900 antialiased;
+  }
+}
+
+#root {
+  @apply min-h-screen w-full;
+}
+
+@layer components {
+  .aicare-panel {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .aicare-sidebar {
+    @apply border-r border-slate-200 bg-white;
+  }
+
+  .aicare-nav-item {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900;
+  }
+
+  .aicare-nav-active {
+    @apply border-l-[3px] border-aicare-teal bg-teal-50 font-semibold text-aicare-teal;
+  }
+
+  .aicare-stat-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md;
+  }
+
+  .aicare-input {
+    @apply h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm transition-colors focus:border-aicare-teal focus:outline-none focus:ring-2 focus:ring-aicare-teal/20;
+  }
+
+  .aicare-metric-icon {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl;
+  }
+
+  .aicare-table .ant-table {
+    @apply bg-transparent;
+  }
+
+  .aicare-table .ant-table-thead > tr > th {
+    @apply bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 !important;
+  }
+
+  .aicare-table .ant-table-tbody > tr > td {
+    @apply border-b border-slate-100 py-3.5 !important;
+  }
+
+  .aicare-table .ant-table-tbody > tr:hover > td {
+    @apply bg-teal-50/40 !important;
+  }
+
+  .aicare-search-wrap {
+    @apply relative flex-1 max-w-md;
+  }
+
+  .aicare-search-wrap input {
+    @apply h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm focus:border-aicare-teal focus:outline-none focus:ring-2 focus:ring-aicare-teal/20;
+  }
+}

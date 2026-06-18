@@ -1,0 +1,18 @@
+# OPTIONAL — only use this if you do NOT have PostgreSQL installed locally.
+# ICMS works with your existing PostgreSQL (e.g. PostgreSQL 17 in pgAdmin).
+# Configure clinic-management-api/appsettings.Development.json instead.
+services:
+  postgres:
+    image: postgres:16
+    container_name: icms-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: icms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - icms_pg_data:/var/lib/postgresql/data
+
+volumes:
+  icms_pg_data:
