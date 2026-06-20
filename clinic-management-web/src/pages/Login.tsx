@@ -49,7 +49,10 @@ export default function Login() {
         refreshToken: data.refreshToken,
         role: data.roleName,
         fullName: data.fullName,
+        userId: data.userId,
       })
+      // Fetch full profile (patientId / doctorId) in the background
+      authStore.fetchProfile()
       toast.success(`Welcome to AiCare, ${data.fullName?.split(' ')[0] ?? 'there'}!`)
       navigate('/', { replace: true })
     } catch (err: unknown) {

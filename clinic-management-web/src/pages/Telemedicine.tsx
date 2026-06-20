@@ -93,7 +93,15 @@ export default function Telemedicine() {
           render: (v, record) => {
             const row = record as TelemedicineRow
             const appointmentId = String(v ?? row.appointmentId)
+            const isCompleted = row.status?.toLowerCase() === 'completed'
             if (!appointmentId) return '—'
+            if (isCompleted) {
+              return (
+                <span className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-400 cursor-not-allowed">
+                  Ended
+                </span>
+              )
+            }
             return (
               <Link
                 to={`/telemedicine/room/${appointmentId}`}

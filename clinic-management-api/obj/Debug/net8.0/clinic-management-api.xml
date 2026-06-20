@@ -19,10 +19,16 @@
         <member name="M:clinic_management_api.Controllers.AuthController.#ctor(clinic_management_api.Services.IAuthService)">
             <summary>Authentication and session management for ICMS.</summary>
         </member>
+        <member name="M:clinic_management_api.Controllers.AuthController.RegisterPatient(clinic_management_api.DTOs.PatientRegisterRequest)">
+            <summary>Public self-service signup — always creates a Patient account.</summary>
+        </member>
         <member name="M:clinic_management_api.Data.DbSeeder.EnsureCanonicalUsersAsync(clinic_management_api.Data.ApplicationDbContext,System.String)">
             <summary>
             Seeds exactly three user accounts: one Administrator, one Doctor, one Patient.
             </summary>
+        </member>
+        <member name="P:clinic_management_api.Helpers.TelemedicineOptions.MeetingBaseUrl">
+            <summary>Base URL for video rooms (e.g. https://meet.jit.si/icms).</summary>
         </member>
         <member name="T:clinic_management_api.Migrations.InitialCreate">
             <inheritdoc />

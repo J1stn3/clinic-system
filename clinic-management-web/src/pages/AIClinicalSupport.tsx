@@ -23,12 +23,17 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function AIClinicalSupport() {
-  const [patientId, setPatientId] = useState('00000000-0000-0000-0000-000000000001')
+  const [patientId, setPatientId] = useState('')
   const [result, setResult] = useState<CdssResponse | null>(null)
 
   const patients = useQuery({
     queryKey: ['patients-cdss'],
     queryFn: async () => (await api.get('/Patient', { params: { page: 1, pageSize: 50 } })).data.items,
+    // Auto-select first patient when data arrives
+    select: (items: { id: string; fullName?: string }[]) => {
+      if (items.length > 0 && !patientId) setPatientId(items[0].id)
+      return items
+    },
   })
 
   const { register, handleSubmit, formState } = useForm<FormData>({
@@ -37,6 +42,10 @@ export default function AIClinicalSupport() {
   })
 
   const onSubmit = async (values: FormData) => {
+    if (!patientId) {
+      toast.error('Please select a patient before running the analysis.')
+      return
+    }
     try {
       const payload = {
         age: values.age,
@@ -97,7 +106,7 @@ export default function AIClinicalSupport() {
               <Label>Vitals (optional, e.g. BP 140/90)</Label>
               <Input {...register('vitals')} />
             </div>
-            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting || !patientId}>
               <Brain className="mr-2 h-4 w-4" />
               Analyze Clinical Data
             </Button>

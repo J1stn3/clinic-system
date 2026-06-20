@@ -24,11 +24,24 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
     }
 }
 
+public class UpdateUserRequestValidator : AbstractValidator<UpdateUserRequest>
+{
+    public UpdateUserRequestValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(128);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.RoleName).Must(r => RoleNames.All.Contains(r)).WithMessage("Invalid role.");
+    }
+}
+
 public class CreateAppointmentRequestValidator : AbstractValidator<CreateAppointmentRequest>
 {
     public CreateAppointmentRequestValidator()
     {
-        RuleFor(x => x.ScheduledAt).GreaterThan(DateTime.UtcNow.AddHours(-1));
+        // Evaluated per-request (not at class registration), allowing bookings from "now" or later
+        RuleFor(x => x.ScheduledAt)
+            .Must(d => d > DateTime.UtcNow.AddMinutes(-5))
+            .WithMessage("Scheduled date must be in the future.");
     }
 }
 

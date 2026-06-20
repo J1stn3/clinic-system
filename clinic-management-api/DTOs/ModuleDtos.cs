@@ -2,7 +2,7 @@ namespace clinic_management_api.DTOs;
 
 // User
 public record UserDto(Guid Id, string FullName, string Email, string RoleName, bool IsActive, DateTime CreatedAt);
-public record CreateUserRequest(string FullName, string Email, string Password, string RoleName, string? Gender, string? Specialty, string? LicenseNumber);
+public record CreateUserRequest(string FullName, string Email, string Password, string RoleName, string? Gender, DateTime? DateOfBirth, string? Specialty, string? LicenseNumber);
 public record UpdateUserRequest(string FullName, string Email, string RoleName, bool IsActive);
 public record UserProfileDto(Guid UserId, string FullName, string Email, string RoleName, Guid? PatientId, Guid? DoctorId);
 

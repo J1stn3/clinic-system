@@ -52,6 +52,7 @@ export default function Pharmacy() {
         description="Monitor inventory, stock levels, and dispensing operations."
         resource="Pharmacy"
         canCreate={authStore.role === 'Administrator'}
+        canEdit={authStore.role === 'Administrator'}
         createLabel="Add Medicine"
         metrics={
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

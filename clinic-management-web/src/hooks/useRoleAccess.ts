@@ -1,3 +1,4 @@
+import { useDashboardStats } from './useDashboardStats'
 import { authStore } from '../stores/authStore'
 
 const roleRoutes: Record<string, string[]> = {
@@ -60,11 +61,6 @@ const labels: Record<string, string> = {
   '/settings': 'Settings',
 }
 
-/** Optional sidebar notification badges (reference UI style). */
-const navBadges: Record<string, number> = {
-  '/appointments': 5,
-  '/consultations': 2,
-}
 
 const navSections: Record<string, { title: string; paths: string[] }[]> = {
   Administrator: [
@@ -123,8 +119,15 @@ export function getNavItems() {
   return roleRoutes[authStore.role].map((path) => ({ path, label: labels[path] }))
 }
 
-export function getNavBadge(path: string) {
-  return navBadges[path]
+/** Optional sidebar notification badges — returns live values from cached dashboard stats. */
+export function getNavBadge(path: string): number | undefined {
+  const { data: stats } = useDashboardStats()
+  const badges: Record<string, number | undefined> = {
+    '/appointments': stats?.upcomingAppointments,
+    '/consultations': stats?.activeConsultations,
+  }
+  const val = badges[path]
+  return val && val > 0 ? val : undefined
 }
 
 export function getNavSections() {
@@ -136,7 +139,7 @@ export function getNavSections() {
       title: section.title,
       items: section.paths
         .filter((path) => allowed.has(path))
-        .map((path) => ({ path, label: labels[path], badge: navBadges[path] })),
+        .map((path) => ({ path, label: labels[path] })),
     }))
     .filter((section) => section.items.length > 0)
 }

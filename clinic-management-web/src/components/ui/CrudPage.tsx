@@ -23,7 +23,10 @@ type CrudPageProps<T extends { id: string }> = {
   description: string
   resource: string
   columns: { title: string; dataIndex: string; render?: (value: unknown, record: T) => React.ReactNode }[]
+  /** Fields shown when EDITING a record. */
   fields?: FieldConfig[]
+  /** Fields shown when CREATING a new record (defaults to fields if not provided). */
+  createFields?: FieldConfig[]
   canCreate?: boolean
   canEdit?: boolean
   canDelete?: boolean
@@ -34,6 +37,8 @@ type CrudPageProps<T extends { id: string }> = {
   embedded?: boolean
   anchorId?: string
   hideTable?: boolean
+  /** Optional external row filter applied after search (e.g. for tab-based filtering). */
+  filterRows?: (items: T[]) => T[]
 }
 
 export function CrudPage<T extends { id: string }>({
@@ -42,6 +47,7 @@ export function CrudPage<T extends { id: string }>({
   resource,
   columns,
   fields = [],
+  createFields,
   canCreate = false,
   canEdit = false,
   canDelete = false,
@@ -52,6 +58,7 @@ export function CrudPage<T extends { id: string }>({
   embedded = false,
   anchorId,
   hideTable = false,
+  filterRows,
 }: CrudPageProps<T>) {
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
@@ -62,6 +69,8 @@ export function CrudPage<T extends { id: string }>({
   const [form, setForm] = useState<Record<string, string>>({})
 
   const { listQuery, createMutation, updateMutation, deleteMutation } = useCrud<T>(resource, page)
+
+  const activeFields = (isCreating: boolean) => isCreating ? (createFields ?? fields) : fields
 
   const openCreate = () => {
     setEditing(null)
@@ -82,12 +91,14 @@ export function CrudPage<T extends { id: string }>({
   }
 
   const submit = async () => {
+    const currentFields = activeFields(!editing)
     const payload: Record<string, unknown> = {}
-    fields.forEach((f) => {
+    currentFields.forEach((f) => {
       const raw = form[f.name]
       if (f.type === 'number') payload[f.name] = Number(raw)
       else if (f.type === 'checkbox') payload[f.name] = raw === 'true'
-      else payload[f.name] = raw
+      else if (raw !== '' && raw != null) payload[f.name] = raw
+      // empty strings are omitted — backend treats missing optional fields as null
     })
     if (editing) {
       await updateMutation.mutateAsync({ id: editing.id, payload: payload as Partial<T> })
@@ -127,19 +138,23 @@ export function CrudPage<T extends { id: string }>({
   const items = (listQuery.data?.items ?? []) as T[]
   const filteredItems = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return items
-    return items.filter((record) =>
-      columns.some((col) => {
-        const value = (record as Record<string, unknown>)[col.dataIndex]
-        if (value == null) return false
-        return String(value).toLowerCase().includes(term)
-      }),
-    )
-  }, [items, columns, search])
+    let result = items
+    if (term) {
+      result = result.filter((record) =>
+        columns.some((col) => {
+          const value = (record as Record<string, unknown>)[col.dataIndex]
+          if (value == null) return false
+          return String(value).toLowerCase().includes(term)
+        }),
+      )
+    }
+    if (filterRows) result = filterRows(result)
+    return result
+  }, [items, columns, search, filterRows])
 
   const primaryAction =
     headerAction ??
-    (canCreate && fields.length > 0 ? (
+    (canCreate && (createFields ?? fields).length > 0 ? (
       <Button variant="accent" onClick={openCreate}>
         + {createLabel}
       </Button>
@@ -222,7 +237,7 @@ export function CrudPage<T extends { id: string }>({
             {editing ? 'Edit' : 'Create'} {title}
           </DialogTitle>
           <div className="mt-4 space-y-3">
-            {fields.map((f) => (
+            {activeFields(!editing).map((f) => (
               <div key={f.name}>
                 <Label>{f.label}</Label>
                 {f.type === 'select' ? (

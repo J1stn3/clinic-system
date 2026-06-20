@@ -9,6 +9,7 @@ namespace clinic_management_api.Services;
 public interface IPatientService
 {
     Task<PagedResult<PatientDto>> GetAllAsync(PagedQuery query);
+    Task<PatientDto?> GetByIdAsync(Guid id);
     Task<PatientDto> CreateAsync(CreatePatientRequest request);
 }
 
@@ -22,6 +23,13 @@ public class PatientService(ApplicationDbContext db, ICurrentUserService current
         var items = await q.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)
             .Select(p => new PatientDto(p.Id, p.UserId, p.User.FullName, p.Gender, p.DateOfBirth)).ToListAsync();
         return new PagedResult<PatientDto>(items, total, query.Page, query.PageSize);
+    }
+
+    public async Task<PatientDto?> GetByIdAsync(Guid id)
+    {
+        currentUser.EnsureRole(RoleNames.Administrator, RoleNames.Doctor, RoleNames.Patient);
+        var p = await db.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == id);
+        return p is null ? null : new PatientDto(p.Id, p.UserId, p.User.FullName, p.Gender, p.DateOfBirth);
     }
 
     public async Task<PatientDto> CreateAsync(CreatePatientRequest request)
@@ -38,6 +46,7 @@ public class PatientService(ApplicationDbContext db, ICurrentUserService current
 public interface IDoctorService
 {
     Task<PagedResult<DoctorDto>> GetAllAsync(PagedQuery query);
+    Task<DoctorDto?> GetByIdAsync(Guid id);
     Task<DoctorDto> CreateAsync(CreateDoctorRequest request);
 }
 
@@ -50,6 +59,12 @@ public class DoctorService(ApplicationDbContext db, ICurrentUserService currentU
         var items = await q.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize)
             .Select(d => new DoctorDto(d.Id, d.UserId, d.User.FullName, d.Specialty, d.LicenseNumber)).ToListAsync();
         return new PagedResult<DoctorDto>(items, total, query.Page, query.PageSize);
+    }
+
+    public async Task<DoctorDto?> GetByIdAsync(Guid id)
+    {
+        var d = await db.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == id);
+        return d is null ? null : new DoctorDto(d.Id, d.UserId, d.User.FullName, d.Specialty, d.LicenseNumber);
     }
 
     public async Task<DoctorDto> CreateAsync(CreateDoctorRequest request)

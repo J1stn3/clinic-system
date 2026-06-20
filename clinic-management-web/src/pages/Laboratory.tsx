@@ -36,8 +36,8 @@ export default function Laboratory() {
       title="Laboratory"
       description="Track lab orders, processing workflow, and results verification."
       resource="Laboratory"
-      canCreate={authStore.role === 'Doctor'}
-      canEdit={authStore.role === 'Doctor'}
+      canCreate={authStore.role === 'Doctor' || authStore.role === 'Administrator'}
+      canEdit={authStore.role === 'Doctor' || authStore.role === 'Administrator'}
       createLabel="New Lab Order"
       metrics={
         <>

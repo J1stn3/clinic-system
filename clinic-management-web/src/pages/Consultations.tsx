@@ -1,18 +1,11 @@
-import { Activity, Heart, Thermometer, Video } from 'lucide-react'
+import { Video } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ClinicalWizard from '../components/consultation/ClinicalWizard'
 import { CrudPage } from '../components/ui/CrudPage'
-import { Card, PageShell, StatusPill } from '../components/ui/PageShell'
+import { PageShell, StatusPill } from '../components/ui/PageShell'
 import { Button } from '../components/ui/button'
 import { usePatients } from '../hooks/useEntityOptions'
 import { authStore } from '../stores/authStore'
-
-const VITALS = [
-  { label: 'Heart Rate', value: '82 bpm', icon: Heart, bg: 'bg-rose-50 text-rose-600' },
-  { label: 'Blood Pressure', value: '120/80', icon: Activity, bg: 'bg-amber-50 text-amber-600' },
-  { label: 'Temperature', value: '36.8 °C', icon: Thermometer, bg: 'bg-orange-50 text-orange-600' },
-  { label: 'SpO2', value: '98%', icon: Activity, bg: 'bg-sky-50 text-sky-600' },
-]
 
 export default function Consultations() {
   const patients = usePatients()
@@ -35,20 +28,6 @@ export default function Consultations() {
           </div>
         }
       >
-        <div className="aicare-metric-grid">
-          {VITALS.map((vital) => {
-            const Icon = vital.icon
-            return (
-              <Card key={vital.label} className="!p-4 transition-shadow hover:shadow-md">
-                <div className={`mb-2 inline-flex rounded-lg p-2 ${vital.bg}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <p className="text-xs font-medium text-slate-500">{vital.label}</p>
-                <p className="text-xl font-bold text-slate-900">{vital.value}</p>
-              </Card>
-            )
-          })}
-        </div>
         <ClinicalWizard />
       </PageShell>
     )

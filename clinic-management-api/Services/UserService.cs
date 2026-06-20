@@ -53,7 +53,12 @@ public class UserService(ApplicationDbContext db, ICurrentUserService currentUse
 
         if (request.RoleName == RoleNames.Patient)
         {
-            db.Patients.Add(new Patient { UserId = user.Id, Gender = request.Gender });
+            db.Patients.Add(new Patient 
+            { 
+                UserId = user.Id, 
+                Gender = request.Gender,
+                DateOfBirth = request.DateOfBirth?.ToUniversalTime()
+            });
         }
         else if (request.RoleName == RoleNames.Doctor)
         {

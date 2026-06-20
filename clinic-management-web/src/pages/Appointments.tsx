@@ -58,6 +58,24 @@ export default function Appointments() {
     </Button>
   ) : undefined
 
+  const filterRows = (items: AppointmentRow[]) => {
+    const now = new Date()
+    if (tab === 'upcoming') {
+      return items.filter((a) => {
+        const d = a.scheduledAt ? new Date(a.scheduledAt) : null
+        return d && d >= now && a.status?.toLowerCase() !== 'cancelled'
+      })
+    }
+    if (tab === 'cancelled') {
+      return items.filter((a) => a.status?.toLowerCase() === 'cancelled')
+    }
+    // past: scheduled date has passed and not cancelled
+    return items.filter((a) => {
+      const d = a.scheduledAt ? new Date(a.scheduledAt) : null
+      return d && d < now && a.status?.toLowerCase() !== 'cancelled'
+    })
+  }
+
   return (
     <>
       <CrudPage
@@ -65,6 +83,7 @@ export default function Appointments() {
         description="Book, view, and manage clinic appointments."
         resource="Appointment"
         headerAction={headerAction}
+        filterRows={filterRows}
         canEdit={role !== 'Patient'}
         canDelete={role === 'Administrator'}
         metrics={

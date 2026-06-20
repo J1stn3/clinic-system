@@ -7,12 +7,16 @@ import { authStore } from '../stores/authStore'
 export default function Users() {
   const { data: stats, isLoading } = useDashboardStats()
 
+  const isAdmin = authStore.role === 'Administrator'
+
   return (
     <CrudPage
       title="User Management"
       description="Manage administrators, doctors, and patients."
       resource="User"
-      canCreate={authStore.role === 'Administrator'}
+      canCreate={isAdmin}
+      canEdit={isAdmin}
+      canDelete={isAdmin}
       createLabel="Add User"
       metrics={
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -39,10 +43,10 @@ export default function Users() {
           render: (v) => <StatusPill variant={v ? 'success' : 'danger'}>{v ? 'Active' : 'Inactive'}</StatusPill>,
         },
       ]}
-      fields={[
+      createFields={[
         { name: 'fullName', label: 'Full Name' },
-        { name: 'email', label: 'Email' },
-        { name: 'password', label: 'Password' },
+        { name: 'email', label: 'Email Address' },
+        { name: 'password', label: 'Password', type: 'password' },
         {
           name: 'roleName',
           label: 'Role',
@@ -53,9 +57,35 @@ export default function Users() {
             { value: 'Patient', label: 'Patient' },
           ],
         },
-        { name: 'specialty', label: 'Specialty (Doctor)' },
-        { name: 'licenseNumber', label: 'License (Doctor)' },
-        { name: 'gender', label: 'Gender (Patient)' },
+        { name: 'specialty', label: 'Specialty (Doctor only)' },
+        { name: 'licenseNumber', label: 'License Number (Doctor only)' },
+        {
+          name: 'gender',
+          label: 'Gender (Patient only)',
+          type: 'select',
+          options: [
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+            { value: 'Other', label: 'Other' },
+            { value: 'Prefer not to say', label: 'Prefer not to say' },
+          ],
+        },
+        { name: 'dateOfBirth', label: 'Date of Birth (Patient only)', type: 'date' },
+      ]}
+      fields={[
+        { name: 'fullName', label: 'Full Name' },
+        { name: 'email', label: 'Email Address' },
+        {
+          name: 'roleName',
+          label: 'Role',
+          type: 'select',
+          options: [
+            { value: 'Administrator', label: 'Administrator' },
+            { value: 'Doctor', label: 'Doctor' },
+            { value: 'Patient', label: 'Patient' },
+          ],
+        },
+        { name: 'isActive', label: 'Active', type: 'checkbox' },
       ]}
     />
   )

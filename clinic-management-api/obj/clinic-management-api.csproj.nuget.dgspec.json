@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\USER\\Documents\\AQUILA_PROJECT\\Project\\CLINIC MANAGEMENT SYSTEM\\clinic-management-api\\clinic-management-api.csproj": {}
+    "D:\\.DevStudio\\Projects\\clinic-system\\clinic-management-api\\clinic-management-api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\USER\\Documents\\AQUILA_PROJECT\\Project\\CLINIC MANAGEMENT SYSTEM\\clinic-management-api\\clinic-management-api.csproj": {
+    "D:\\.DevStudio\\Projects\\clinic-system\\clinic-management-api\\clinic-management-api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\USER\\Documents\\AQUILA_PROJECT\\Project\\CLINIC MANAGEMENT SYSTEM\\clinic-management-api\\clinic-management-api.csproj",
+        "projectUniqueName": "D:\\.DevStudio\\Projects\\clinic-system\\clinic-management-api\\clinic-management-api.csproj",
         "projectName": "clinic-management-api",
-        "projectPath": "C:\\Users\\USER\\Documents\\AQUILA_PROJECT\\Project\\CLINIC MANAGEMENT SYSTEM\\clinic-management-api\\clinic-management-api.csproj",
-        "packagesPath": "C:\\Users\\USER\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\USER\\Documents\\AQUILA_PROJECT\\Project\\CLINIC MANAGEMENT SYSTEM\\clinic-management-api\\obj\\",
+        "projectPath": "D:\\.DevStudio\\Projects\\clinic-system\\clinic-management-api\\clinic-management-api.csproj",
+        "packagesPath": "C:\\Users\\lenovo\\.nuget\\packages\\",
+        "outputPath": "D:\\.DevStudio\\Projects\\clinic-system\\clinic-management-api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\USER\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"

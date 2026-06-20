@@ -66,14 +66,12 @@ public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, 
         db.Patients.Add(new Patient
         {
             UserId = user.Id,
-            Gender = request.Gender,
+            Gender = request.Gender ?? "Other",
             DateOfBirth = request.DateOfBirth?.ToUniversalTime()
         });
         await db.SaveChangesAsync();
 
-        if (user.RoleName != RoleNames.Patient)
-            throw new InvalidOperationException("Registration failed: only patient accounts can be created via self-service signup.");
-
+        // RoleName is always Patient here (hardcoded above); no need to re-check.
         return new PatientRegisterResponse(
             "Patient account created successfully. You can now sign in.",
             assignedRole);
@@ -91,6 +89,12 @@ public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, 
     {
         var user = await db.Users.FirstOrDefaultAsync(x => x.Email == request.Email.ToLowerInvariant());
         if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) return null;
+
+        // Purge expired refresh tokens for this user to prevent unlimited accumulation.
+        var expiredTokens = db.RefreshTokens
+            .Where(t => t.UserId == user.Id && (t.IsRevoked || t.ExpiresAt < DateTime.UtcNow));
+        db.RefreshTokens.RemoveRange(expiredTokens);
+
         return await BuildAuthResponse(user);
     }
 

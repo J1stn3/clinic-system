@@ -13,7 +13,7 @@ public interface IDashboardService
 
 public class DashboardService(ApplicationDbContext db, ICurrentUserService currentUser) : IDashboardService
 {
-    private static readonly DateTime TodayUtc = DateTime.UtcNow.Date;
+    private static DateTime TodayUtc => DateTime.UtcNow.Date;
 
     public async Task<DashboardStatsDto> GetStatsAsync()
     {
@@ -111,6 +111,7 @@ public class DashboardService(ApplicationDbContext db, ICurrentUserService curre
         var totalMedicines = await medicines.CountAsync();
         var lowStock = await medicines.CountAsync(m => m.StockQuantity > 20 && m.StockQuantity <= 80);
         var criticalStock = await medicines.CountAsync(m => m.StockQuantity <= 20);
+        // "ExpiringSoon" approximated by stock <= 50 (no ExpiryDate field on Medicine entity yet)
         var expiringSoon = await medicines.CountAsync(m => m.StockQuantity <= 50);
         var dispensedToday = await prescriptions.CountAsync(p => p.CreatedAt >= TodayUtc);
         var pendingBills = await db.Billings.CountAsync(b => b.Status == "Pending");

@@ -1,4 +1,4 @@
-﻿using clinic_management_api.Authorization;
+using clinic_management_api.Authorization;
 using clinic_management_api.DTOs;
 using clinic_management_api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +17,7 @@ public class AppointmentController(IAppointmentService service) : ApiControllerB
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request) => OkData(await service.CreateAsync(request));
 
+    [Authorize(Policy = AuthorizationPolicies.StaffOnly)]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAppointmentRequest request) => OkData(await service.UpdateAsync(id, request));
 
