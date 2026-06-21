@@ -145,7 +145,22 @@ export default function Login() {
             </div>
           </div>
 
-          <SocialAuthButtons disabled={submitting} />
+          <SocialAuthButtons
+            disabled={submitting}
+            onSuccess={(data) => {
+              authStore.login({
+                token: data.accessToken,
+                refreshToken: data.refreshToken,
+                role: data.roleName,
+                fullName: data.fullName,
+                userId: data.userId,
+              })
+              authStore.fetchProfile()
+              toast.success(`Welcome to GreenHeart Hospital, ${data.fullName?.split(' ')[0] ?? 'there'}!`)
+              navigate('/', { replace: true })
+            }}
+            onError={(msg) => toast.error(msg)}
+          />
 
           <TermsCheckbox
             checked={Boolean(acceptTerms)}

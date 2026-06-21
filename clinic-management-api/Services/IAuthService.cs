@@ -10,4 +10,6 @@ public interface IAuthService
     Task<AuthResponse?> LoginAsync(LoginRequest request);
     Task<AuthResponse?> RefreshAsync(RefreshRequest request);
     Task<UserProfileDto?> GetMeAsync();
+    Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request);
+    Task<AuthResponse> FacebookLoginAsync(FacebookLoginRequest request);
 }

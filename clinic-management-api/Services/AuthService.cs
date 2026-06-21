@@ -1,20 +1,24 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 using clinic_management_api.Data;
 using clinic_management_api.DTOs;
 using clinic_management_api.Helpers;
 using clinic_management_api.Models;
+using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace clinic_management_api.Services;
 
-public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, ICurrentUserService currentUser) : IAuthService
+public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, IOptions<OAuthOptions> oauthOptions, ICurrentUserService currentUser, IHttpClientFactory httpClientFactory) : IAuthService
 {
     private readonly JwtOptions _jwt = options.Value;
+    private readonly OAuthOptions _oauth = oauthOptions.Value;
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
@@ -119,6 +123,68 @@ public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, 
         return new UserProfileDto(user.Id, user.FullName, user.Email, user.RoleName, patientId, doctorId);
     }
 
+    public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request)
+    {
+        var http = httpClientFactory.CreateClient();
+        using var response = await http.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={Uri.EscapeDataString(request.IdToken)}");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new UnauthorizedAccessException("Invalid Google access token.");
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<GoogleUserInfo>()
+            ?? throw new UnauthorizedAccessException("Unable to fetch Google user profile.");
+
+        var email = payload.Email.ToLowerInvariant();
+        var user = await FindOrCreateOAuthUser(email, payload.Name ?? email);
+        return await BuildAuthResponse(user);
+    }
+
+    public async Task<AuthResponse> FacebookLoginAsync(FacebookLoginRequest request)
+    {
+        // Verify the access token by exchanging it for an app token and calling /debug_token
+        var http = httpClientFactory.CreateClient();
+        var appToken = $"{_oauth.Facebook.AppId}|{_oauth.Facebook.AppSecret}";
+        var debugUrl = $"https://graph.facebook.com/debug_token?input_token={request.AccessToken}&access_token={appToken}";
+        var debugResp = await http.GetFromJsonAsync<FacebookDebugResponse>(debugUrl)
+            ?? throw new UnauthorizedAccessException("Unable to verify Facebook token.");
+        if (!debugResp.Data.IsValid)
+            throw new UnauthorizedAccessException("Invalid or expired Facebook access token.");
+
+        // Fetch user profile
+        var meUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={request.AccessToken}";
+        var me = await http.GetFromJsonAsync<FacebookMeResponse>(meUrl)
+            ?? throw new UnauthorizedAccessException("Unable to fetch Facebook user profile.");
+
+        if (string.IsNullOrWhiteSpace(me.Email))
+            throw new InvalidOperationException("Your Facebook account must have a confirmed email to sign in here.");
+
+        var email = me.Email.ToLowerInvariant();
+        var user = await FindOrCreateOAuthUser(email, me.Name ?? email);
+        return await BuildAuthResponse(user);
+    }
+
+    /// <summary>Finds an existing user by email or creates a new Patient account for OAuth sign-in.</summary>
+    private async Task<User> FindOrCreateOAuthUser(string email, string fullName)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user is not null) return user;
+
+        // New user — create Patient account (social login is always patient self-service)
+        user = new User
+        {
+            FullName = fullName,
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()), // random unusable password
+            RoleName = RoleNames.Patient
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        db.Patients.Add(new Patient { UserId = user.Id });
+        await db.SaveChangesAsync();
+        return user;
+    }
+
     private async Task<AuthResponse> BuildAuthResponse(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
@@ -143,5 +209,14 @@ public class AuthService(ApplicationDbContext db, IOptions<JwtOptions> options, 
         db.RefreshTokens.Add(refresh);
         await db.SaveChangesAsync();
         return new AuthResponse(accessToken, refresh.Token, user.RoleName, user.Id, user.FullName);
+    }
+
+    private class GoogleUserInfo
+    {
+        [JsonPropertyName("email")]
+        public string Email { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
     }
 }

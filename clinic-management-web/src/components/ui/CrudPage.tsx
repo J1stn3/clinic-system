@@ -14,7 +14,7 @@ import { TableSkeleton } from './skeleton'
 export type FieldConfig = {
   name: string
   label: string
-  type?: 'text' | 'number' | 'datetime-local' | 'select' | 'checkbox'
+  type?: 'text' | 'password' | 'number' | 'date' | 'datetime-local' | 'select' | 'checkbox'
   options?: { value: string; label: string }[]
 }
 

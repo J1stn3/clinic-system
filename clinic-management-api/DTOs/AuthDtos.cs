@@ -8,3 +8,7 @@ public record ForgotPasswordRequest(string Email);
 public record AuthResponse(string AccessToken, string RefreshToken, string RoleName, Guid UserId, string FullName);
 public record MessageResponse(string Message);
 public record PatientRegisterResponse(string Message, string RoleName);
+
+// Social / OAuth sign-in
+public record GoogleLoginRequest(string IdToken);
+public record FacebookLoginRequest(string AccessToken);

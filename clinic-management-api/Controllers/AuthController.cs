@@ -49,4 +49,40 @@ public class AuthController(IAuthService authService) : ApiControllerBase
         var profile = await authService.GetMeAsync();
         return profile is null ? NotFound() : OkData(profile);
     }
+
+    /// <summary>Sign in or register with a Google ID token obtained via Google Identity Services.</summary>
+    [AllowAnonymous]
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        try
+        {
+            var result = await authService.GoogleLoginAsync(request);
+            return OkData(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>Sign in or register with a Facebook access token obtained via the Facebook JS SDK.</summary>
+    [AllowAnonymous]
+    [HttpPost("facebook")]
+    public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest request)
+    {
+        try
+        {
+            var result = await authService.FacebookLoginAsync(request);
+            return OkData(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

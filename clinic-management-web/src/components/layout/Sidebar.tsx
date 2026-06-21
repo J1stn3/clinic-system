@@ -8,7 +8,6 @@ import {
   CreditCard,
   FileText,
   FlaskConical,
-  HeartPulse,
   LayoutDashboard,
   LogOut,
   Pill,
@@ -24,6 +23,7 @@ import type { LucideIcon } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections } from '../../hooks/useRoleAccess'
+import { useDashboardStats } from '../../hooks/useDashboardStats'
 import { cn } from '../../lib/utils'
 import { authStore } from '../../stores/authStore'
 import { uiStore } from '../../stores/uiStore'
@@ -53,7 +53,19 @@ type SidebarProps = { isMobile?: boolean }
 
 export default observer(function Sidebar({ isMobile = false }: SidebarProps) {
   const location = useLocation()
-  const sections = getNavSections()
+  const rawSections = getNavSections()
+  const { data: stats } = useDashboardStats()
+
+  // Merge live badge counts into sections (hooks must be at top level)
+  const badgeMap: Record<string, number | undefined> = {
+    '/appointments': stats?.upcomingAppointments && stats.upcomingAppointments > 0 ? stats.upcomingAppointments : undefined,
+    '/consultations': stats?.activeConsultations && stats.activeConsultations > 0 ? stats.activeConsultations : undefined,
+  }
+  const sections = rawSections.map((section) => ({
+    ...section,
+    items: section.items.map((item) => ({ ...item, badge: badgeMap[item.path] })),
+  }))
+
   const collapsed = uiStore.sidebarCollapsed && !isMobile
   const isPatient = authStore.role === 'Patient'
 
@@ -78,15 +90,15 @@ export default observer(function Sidebar({ isMobile = false }: SidebarProps) {
       )}
     >
       <div className={cn('flex items-center gap-3 border-b border-teal-100/80 p-4', collapsed && 'justify-center px-2')}>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-glow">
-          <HeartPulse className="h-5 w-5" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-glow">
+          <img src="/logo.png" alt="GreenHeart Hospital" className="h-full w-full object-contain" />
         </div>
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-extrabold tracking-tight">
-              <span className="aicare-gradient-text">AiCare</span>
+            <h2 className="text-base font-extrabold leading-tight tracking-tight">
+              <span className="aicare-gradient-text">GreenHeart</span>
             </h2>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600/70">Clinic Suite</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-teal-600/70">Hospital</p>
           </div>
         )}
         {isMobile ? (

@@ -1,18 +1,68 @@
-# OPTIONAL — only use this if you do NOT have PostgreSQL installed locally.
-# ICMS works with your existing PostgreSQL (e.g. PostgreSQL 17 in pgAdmin).
-# Configure clinic-management-api/appsettings.Development.json instead.
 services:
+
+  # ── PostgreSQL Database ───────────────────────────────────────────────────
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: icms-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: icms_db
     ports:
-      - "5432:5432"
+      - "5432:5432"          # expose to host so you can still connect with pgAdmin
     volumes:
       - icms_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d icms_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── ASP.NET Core API ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./clinic-management-api
+      dockerfile: Dockerfile
+    container_name: icms-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # Override connection string so the API talks to the postgres container
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;Port=5432;Database=icms_db;Username=postgres
+      Database__Password: postgres
+      Jwt__Secret: "CHANGE_THIS_IN_PRODUCTION_USE_A_LONG_RANDOM_SECRET_KEY_HERE"
+      Jwt__Issuer: icms-api
+      Jwt__Audience: icms-web
+    ports:
+      - "5064:8080"          # optional: reach the API directly at localhost:5064
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── React / Vite Frontend (Nginx) ─────────────────────────────────────────
+  web:
+    build:
+      context: ./clinic-management-web
+      dockerfile: Dockerfile
+      args:
+        # In the container, the browser calls /api which Nginx proxies to the
+        # api container. VITE_API_URL is left as /api (the default fallback).
+        VITE_API_URL: /api
+    container_name: icms-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"              # visit http://localhost in your browser
 
 volumes:
   icms_pg_data:
+    driver: local

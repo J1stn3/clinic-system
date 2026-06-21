@@ -22,10 +22,22 @@
         <member name="M:clinic_management_api.Controllers.AuthController.RegisterPatient(clinic_management_api.DTOs.PatientRegisterRequest)">
             <summary>Public self-service signup — always creates a Patient account.</summary>
         </member>
+        <member name="M:clinic_management_api.Controllers.AuthController.GoogleLogin(clinic_management_api.DTOs.GoogleLoginRequest)">
+            <summary>Sign in or register with a Google ID token obtained via Google Identity Services.</summary>
+        </member>
+        <member name="M:clinic_management_api.Controllers.AuthController.FacebookLogin(clinic_management_api.DTOs.FacebookLoginRequest)">
+            <summary>Sign in or register with a Facebook access token obtained via the Facebook JS SDK.</summary>
+        </member>
         <member name="M:clinic_management_api.Data.DbSeeder.EnsureCanonicalUsersAsync(clinic_management_api.Data.ApplicationDbContext,System.String)">
             <summary>
             Seeds exactly three user accounts: one Administrator, one Doctor, one Patient.
             </summary>
+        </member>
+        <member name="T:clinic_management_api.Helpers.FacebookDebugResponse">
+            <summary>Response shape from https://graph.facebook.com/debug_token</summary>
+        </member>
+        <member name="T:clinic_management_api.Helpers.FacebookMeResponse">
+            <summary>Response shape from https://graph.facebook.com/me</summary>
         </member>
         <member name="P:clinic_management_api.Helpers.TelemedicineOptions.MeetingBaseUrl">
             <summary>Base URL for video rooms (e.g. https://meet.jit.si/icms).</summary>
@@ -53,6 +65,9 @@
         </member>
         <member name="M:clinic_management_api.Migrations.AddRelationshipsAndSettings.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
+        </member>
+        <member name="M:clinic_management_api.Services.AuthService.FindOrCreateOAuthUser(System.String,System.String)">
+            <summary>Finds an existing user by email or creates a new Patient account for OAuth sign-in.</summary>
         </member>
     </members>
 </doc>

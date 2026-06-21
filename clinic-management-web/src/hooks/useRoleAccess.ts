@@ -139,7 +139,7 @@ export function getNavSections() {
       title: section.title,
       items: section.paths
         .filter((path) => allowed.has(path))
-        .map((path) => ({ path, label: labels[path] })),
+        .map((path) => ({ path, label: labels[path], badge: undefined as number | undefined })),
     }))
     .filter((section) => section.items.length > 0)
 }

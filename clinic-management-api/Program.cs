@@ -83,6 +83,8 @@ var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["Secret"] ?? "ReplaceMeWithAStrongLongSecretForProduction";
 builder.Services.Configure<JwtOptions>(jwtSection);
 builder.Services.Configure<TelemedicineOptions>(builder.Configuration.GetSection(TelemedicineOptions.SectionName));
+builder.Services.Configure<OAuthOptions>(builder.Configuration.GetSection("OAuth"));
+builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
